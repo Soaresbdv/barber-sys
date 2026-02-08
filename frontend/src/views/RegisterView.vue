@@ -32,6 +32,7 @@ const handleRegister = async () => {
 
     localStorage.setItem('token', response.data.access_token)
     localStorage.setItem('user_role', response.data.user.role) 
+    alert('Conta criada com sucesso!')
     
     setTimeout(() => {
         router.push('/')

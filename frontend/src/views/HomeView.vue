@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const bgImage = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2074&auto=format&fit=crop"
+
+const isLoggedIn = ref(false)
+
+onMounted(() => {
+  if (localStorage.getItem('token')) {
+    isLoggedIn.value = true
+  }
+})
 </script>
 
 <template>
@@ -20,8 +29,12 @@ const bgImage = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=
             </div>
           </div>
           <div>
-            <RouterLink to="/login" class="bg-emerald-900 hover:bg-emerald-800 text-stone-50 font-bold py-2 px-6 rounded-sm transition-all shadow-lg shadow-emerald-900/20 uppercase tracking-wider text-xs border border-emerald-950">
+            <RouterLink v-if="!isLoggedIn" to="/login" class="bg-emerald-900 hover:bg-emerald-800 text-stone-50 font-bold py-2 px-6 rounded-sm transition-all shadow-lg shadow-emerald-900/20 uppercase tracking-wider text-xs border border-emerald-950">
               Área do Cliente
+            </RouterLink>
+
+            <RouterLink v-else to="/dashboard" class="bg-stone-200 hover:bg-stone-300 text-emerald-950 font-bold py-2 px-6 rounded-sm transition-all shadow-lg uppercase tracking-wider text-xs border border-stone-400">
+              Meu Painel
             </RouterLink>
           </div>
         </div>
