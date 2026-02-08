@@ -19,6 +19,18 @@ const router = createRouter({
       name: 'register',
       component: () => import('../views/RegisterView.vue') 
     },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
+      beforeEnter: (to, from, next) => {
+        if (!localStorage.getItem('token')) {
+          next('/login')
+        } else {
+          next()
+        }
+      }
+    }
   ]
 })
 
