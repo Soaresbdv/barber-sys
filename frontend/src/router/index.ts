@@ -30,7 +30,16 @@ const router = createRouter({
           next()
         }
       }
-    }
+    },
+    {
+      path: '/appointments/new',
+      name: 'new-appointment',
+      component: () => import('../views/NewAppointmentView.vue'),
+       beforeEnter: (to, from, next) => { // Proteção
+        if (!localStorage.getItem('token')) next('/login')
+        else next()
+      }
+    },
   ]
 })
 

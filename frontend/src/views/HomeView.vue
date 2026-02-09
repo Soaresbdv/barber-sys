@@ -64,14 +64,14 @@ onMounted(() => {
           </p>
           
           <div class="flex flex-col sm:flex-row gap-4">
-            <RouterLink to="/register" class="flex justify-center items-center px-8 py-4 rounded-sm text-lg font-bold tracking-widest uppercase text-white bg-emerald-900 hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20">
-              Agendar Agora
-            </RouterLink>
-            
-            <button class="flex justify-center items-center px-8 py-4 border-2 border-stone-800 rounded-sm text-lg font-bold tracking-widest uppercase text-stone-800 hover:bg-stone-800 hover:text-white transition-all">
-              Serviços
-            </button>
-          </div>
+              <RouterLink to="/appointments/new" class="flex justify-center items-center px-8 py-4 rounded-sm text-lg font-bold tracking-widest uppercase text-white bg-emerald-900 hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20">
+                Agendar Agora
+              </RouterLink>
+              
+              <button class="flex justify-center items-center px-8 py-4 border-2 border-stone-800 rounded-sm text-lg font-bold tracking-widest uppercase text-stone-800 hover:bg-stone-800 hover:text-white transition-all">
+                Serviços
+              </button>
+            </div>
         </div>
       </div>
     </div>

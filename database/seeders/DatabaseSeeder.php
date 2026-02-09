@@ -9,43 +9,47 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        User::create([
-            'name' => 'Bruno Admin',
-            'email' => 'admin@barber.com',
-            'password' => Hash::make('password'), 
+        // Usuario administrador (pode ser usado para testes ou gerenciamento)
+        User::firstOrCreate(['email' => 'admin@barber.com'], [
+            'name' => 'Admin BarberSys',
+            'password' => Hash::make('password'),
             'role' => 'admin',
-            'phone' => '41999999999',
-            'avatar' => null,
         ]);
 
-        User::create([
+        // Barbeiro
+        User::firstOrCreate(['email' => 'joao@barber.com'], [
             'name' => 'João Navalha',
-            'email' => 'joao@barber.com',
             'password' => Hash::make('password'),
             'role' => 'barber',
-            'phone' => '41988888888',
-            'avatar' => null,
+            'phone' => '11999999999'
+        ]);
+        // Barbeiro
+        User::firstOrCreate(['email' => 'carlos@barber.com'], [
+            'name' => 'Carlos Tesoura',
+            'password' => Hash::make('password'),
+            'role' => 'barber',
+            'phone' => '11988888888'
         ]);
 
+        // Serviços disnponíveis
         Service::create([
-            'name' => 'Corte Degradê',
-            'description' => 'Corte detalhado com tesoura e máquina',
+            'name' => 'Corte Clássico',
+            'price' => 45.00,
+            'duration_minutes' => 45
+        ]);
+        // Serviços disnponíveis
+        Service::create([
+            'name' => 'Barba Terapia',
             'price' => 35.00,
-            'duration_minutes' => 45,
-            'active' => true
+            'duration_minutes' => 30
         ]);
-
+        // Serviços disnponíveis
         Service::create([
-            'name' => 'Barba Lenhador',
-            'description' => 'Modelagem completa e terapia com toalha quente',
-            'price' => 25.00,
-            'duration_minutes' => 30,
-            'active' => true
+            'name' => 'Combo Completo',
+            'price' => 70.00,
+            'duration_minutes' => 60
         ]);
     }
 }
