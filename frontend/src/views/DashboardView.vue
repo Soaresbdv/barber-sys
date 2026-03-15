@@ -97,62 +97,83 @@ const cancelAppointment = async (id: number) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 font-sans">
-    <nav class="bg-white border-b border-stone-200 px-8 py-4 flex justify-between items-center">
-      <h1 class="font-serif text-2xl font-bold text-emerald-950 tracking-widest">
-        BARBER<span class="text-emerald-700">SYS</span>.
-      </h1>
-      <button @click="handleLogout" :disabled="isLoading" class="text-red-700 font-bold text-sm border border-red-200 px-4 py-2 rounded-sm hover:bg-red-50">
-        SAIR DO SISTEMA
+  <div class="min-h-screen bg-[#FBFBFB] text-stone-800 font-sans">
+    <nav class="bg-white border-b border-stone-100 px-8 py-5 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+      <div class="flex items-center gap-8">
+        <h1 @click="router.push('/')" class="font-serif text-2xl font-bold text-emerald-950 tracking-widest cursor-pointer">
+          BARBER<span class="text-emerald-600">SYS</span>
+        </h1>
+        
+        <button @click="router.push('/')" class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+          </svg>
+          Início
+        </button>
+      </div>
+
+      <button @click="handleLogout" :disabled="isLoading" class="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400 hover:text-red-600 transition-colors">
+        Sair
       </button>
     </nav>
 
-    <div class="max-w-7xl mx-auto py-12 px-4">
-      <div class="bg-white shadow-xl rounded-lg border-t-4 border-emerald-900 p-8">
-        <h2 class="text-3xl font-serif text-stone-800 mb-2">Bem-vindo ao seu Painel</h2>
-        <p class="text-stone-600 mb-8">Olá! Aqui você pode gerenciar seus horários.</p>
-        
-        <h3 class="text-xl font-serif text-stone-800 mb-4 border-b pb-2">Meus Agendamentos</h3>
-        
-        <div v-if="appointments.length > 0" class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-stone-200">
-            <thead class="bg-stone-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-bold text-stone-500 uppercase">Serviço</th>
-                <th class="px-6 py-3 text-left text-xs font-bold text-stone-500 uppercase">Data/Hora</th>
-                <th class="px-6 py-3 text-left text-xs font-bold text-stone-500 uppercase">Status</th>
-                <th class="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-stone-100">
-              <tr v-for="apt in appointments" :key="apt.id">
-                <td class="px-6 py-4 text-sm font-medium text-stone-900">
-                  {{ apt.service?.name || 'Serviço #' + apt.service_id }}
-                </td>
-                <td class="px-6 py-4 text-sm text-stone-600">
-                  {{ formatDateDirectly(apt.start_time) }}
-                </td>
-                <td class="px-6 py-4">
-                  <span :class="{
-                    'px-3 py-1 text-xs font-semibold rounded-full border': true,
-                    'bg-blue-50 text-blue-800 border-blue-200': apt.status === 'scheduled',
-                    'bg-red-50 text-red-800 border-red-200': apt.status === 'canceled'
-                  }">
-                    {{ formatStatus(apt.status) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-right text-sm font-medium space-x-3">
-                  <button v-if="apt.status === 'scheduled'" @click="editAppointment(apt)" class="text-emerald-600 hover:underline">Editar</button>
-                  <button v-if="apt.status === 'scheduled'" @click="cancelAppointment(apt.id)" class="text-red-600 hover:underline">Cancelar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <main class="max-w-4xl mx-auto py-16 px-6">
+      <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 class="text-4xl font-serif text-stone-900 mb-2">Painel de Controle</h2>
+          <p class="text-stone-500 italic">Bem-vindo! Gerencie seus horários com facilidade.</p>
         </div>
-        <div v-else class="text-center py-12 border-2 border-dashed border-stone-300 text-stone-400 rounded-lg">
-          Nenhum agendamento encontrado.
+        <button @click="router.push('/appointments/new')" class="bg-emerald-900 hover:bg-emerald-800 text-white text-[10px] font-black uppercase tracking-widest px-8 py-4 transition-transform active:scale-95 shadow-md">
+          Novo Agendamento
+        </button>
+      </header>
+
+      <div v-if="appointments.length > 0" class="space-y-4">
+        <div v-for="apt in appointments" :key="apt.id" 
+          class="bg-white border border-stone-100 p-8 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:border-emerald-200 transition-all duration-300">
+          
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-sm">
+                {{ formatStatus(apt.status) }}
+              </span>
+            </div>
+            <h4 class="text-xl font-serif text-stone-800 tracking-tight">
+              {{ apt.service?.name || 'Serviço Profissional' }}
+            </h4>
+            <p class="text-stone-500 text-sm flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ formatDateDirectly(apt.start_time) }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-8 mt-6 md:mt-0 pt-6 md:pt-0 border-t md:border-t-0 border-stone-50">
+            <button v-if="apt.status === 'scheduled'" @click="editAppointment(apt)" 
+              class="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors">
+              Editar
+            </button>
+            <button v-if="apt.status === 'scheduled'" @click="cancelAppointment(apt.id)"
+              class="text-[10px] font-bold uppercase tracking-widest text-stone-300 hover:text-red-500 transition-colors">
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div v-else class="py-24 text-center border-2 border-dashed border-stone-100 rounded-xl">
+        <p class="font-serif italic text-stone-400 text-lg">Nenhum agendamento ativo no momento.</p>
+        <button @click="router.push('/appointments/new')" class="mt-4 text-emerald-600 text-xs font-bold uppercase tracking-widest hover:underline">
+          Marcar agora
+        </button>
+      </div>
+    </main>
   </div>
 </template>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;700;900&display=swap');
+.font-serif { font-family: 'Playfair Display', serif; }
+.font-sans { font-family: 'Inter', sans-serif; }
+</style>
