@@ -23,6 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/services', [SchedulingController::class, 'services']);
     // Rota para checar disponibilidade 
     Route::get('/availability', [SchedulingController::class, 'availability']); 
+
+    // Agendamento
+    // Rota para listar os agendamentos do usuário (O QUE ESTAVA FALTANDO)
+    Route::get('/appointments', [SchedulingController::class, 'index']);
     // Rota para criar um agendamento
     Route::post('/appointments', [SchedulingController::class, 'store']);
 });

@@ -10,6 +10,16 @@ use Carbon\Carbon;
 
 class SchedulingController extends Controller
 {
+    // ADICIONE ESTA FUNÇÃO NO TOPO OU ANTES DO STORE
+    public function index(Request $request)
+    {
+        // Retorna os agendamentos do usuário logado com os dados do serviço
+        return $request->user()->appointments()
+            ->with('service') 
+            ->orderBy('start_time', 'desc')
+            ->get();
+    }
+
     public function barbers()
     {
         return User::where('role', 'barber')->get(['id', 'name', 'avatar']);
