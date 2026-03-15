@@ -29,4 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/appointments', [SchedulingController::class, 'index']);
     // Rota para criar um agendamento
     Route::post('/appointments', [SchedulingController::class, 'store']);
+    // Rota para atualizar um agendamento
+    Route::put('/appointments/{id}', [SchedulingController::class, 'update']);
+    // Rota para cancelar um agendamento
+    Route::delete('/appointments/{id}', [SchedulingController::class, 'destroy']);
 });

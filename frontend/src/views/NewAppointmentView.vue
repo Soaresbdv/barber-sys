@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
+const route = useRoute()
 
 const services = ref<any[]>([])
 const barbers = ref<any[]>([])
@@ -16,6 +17,8 @@ const selectedTime = ref('')
 
 const loading = ref(false)
 const calculating = ref(false) 
+const isEditing = ref(false)
+const appointmentId = ref<string | null>(null)
 
 onMounted(async () => {
   const token = localStorage.getItem('token')
@@ -31,10 +34,40 @@ onMounted(async () => {
     
     services.value = resServices.data
     barbers.value = resBarbers.data
+
+    if (route.query.edit) {
+      isEditing.value = true
+      appointmentId.value = route.query.edit as string
+      await loadAppointmentForEdit(appointmentId.value)
+    }
   } catch (error) {
-    console.error('Erro ao carregar dados', error)
+    console.error('Erro ao carregar dados iniciais', error)
   }
 })
+
+const loadAppointmentForEdit = async (id: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await axios.get(`http://localhost:8000/api/appointments`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    
+    const apt = response.data.find((a: any) => a.id == id)
+    
+    if (apt) {
+      selectedBarber.value = barbers.value.find(b => b.id === apt.barber_id)
+      selectedService.value = services.value.find(s => s.id === apt.service_id)
+      
+      const dateObj = new Date(apt.start_time)
+      selectedDate.value = dateObj.toISOString().split('T')[0] ?? '';
+      
+      selectedTime.value = dateObj.getHours().toString().padStart(2, '0') + ':' + 
+                          dateObj.getMinutes().toString().padStart(2, '0')
+    }
+  } catch (error) {
+    console.error('Erro ao carregar agendamento para edição', error)
+  }
+}
 
 watch([selectedBarber, selectedService, selectedDate], async () => {
   if (selectedBarber.value && selectedService.value && selectedDate.value) {
@@ -46,7 +79,8 @@ watch([selectedBarber, selectedService, selectedDate], async () => {
 
 const fetchAvailability = async () => {
   calculating.value = true
-  selectedTime.value = '' 
+  if (!isEditing.value) selectedTime.value = '' 
+  
   try {
     const token = localStorage.getItem('token')
     const response = await axios.get('http://localhost:8000/api/availability', {
@@ -71,17 +105,26 @@ const confirmAppointment = async () => {
   loading.value = true
   try {
     const token = localStorage.getItem('token')
-    await axios.post('http://localhost:8000/api/appointments', {
+    
+    const payload = {
       barber_id: selectedBarber.value.id,
       service_id: selectedService.value.id,
-      date: selectedDate.value,
-      time: selectedTime.value
-    }, { headers: { Authorization: `Bearer ${token}` } })
+      date: selectedDate.value, 
+      time: selectedTime.value  
+    }
 
-    alert('Agendamento confirmado com sucesso!')
+    const config = { headers: { Authorization: `Bearer ${token}` } }
+
+    if (isEditing.value) {
+      await axios.put(`http://localhost:8000/api/appointments/${appointmentId.value}`, payload, config)
+    } else {
+      await axios.post('http://localhost:8000/api/appointments', payload, config)
+    }
+
+    alert('Agendamento salvo com sucesso!')
     router.push('/dashboard')
   } catch (error: any) {
-    alert(error.response?.data?.message || 'Erro ao agendar.')
+    alert(error.response?.data?.message || 'Erro ao processar agendamento.')
   } finally {
     loading.value = false
   }

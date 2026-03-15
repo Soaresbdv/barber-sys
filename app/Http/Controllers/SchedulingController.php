@@ -10,10 +10,8 @@ use Carbon\Carbon;
 
 class SchedulingController extends Controller
 {
-    // ADICIONE ESTA FUNÇÃO NO TOPO OU ANTES DO STORE
     public function index(Request $request)
     {
-        // Retorna os agendamentos do usuário logado com os dados do serviço
         return $request->user()->appointments()
             ->with('service') 
             ->orderBy('start_time', 'desc')
@@ -122,4 +120,47 @@ class SchedulingController extends Controller
 
         return response()->json(['message' => 'Agendamento realizado com sucesso!']);
     }  
+    public function destroy($id)
+{
+    $appointment = auth()->user()->appointments()->findOrFail($id);
+    $appointment->delete(); 
+    return response()->json(['message' => 'Agendamento cancelado com sucesso.']);
+}
+
+public function update(Request $request, $id)
+{
+    $appointment = $request->user()->appointments()->findOrFail($id);
+
+    $request->validate([
+        'barber_id' => 'required|exists:users,id',
+        'service_id' => 'required|exists:services,id',
+        'date' => 'required|date',
+        'time' => 'required|date_format:H:i' 
+    ]);
+
+    $startTime = Carbon::parse($request->date . ' ' . $request->time);
+    $service = Service::find($request->service_id);
+    $endTime = $startTime->copy()->addMinutes($service->duration_minutes);
+
+    $exists = Appointment::where('barber_id', $request->barber_id)
+        ->where('id', '!=', $id) 
+        ->where('status', '!=', 'canceled')
+        ->where(function ($query) use ($startTime, $endTime) {
+            $query->whereBetween('start_time', [$startTime, $endTime])
+                  ->orWhereBetween('end_time', [$startTime, $endTime]);
+        })->exists();
+
+    if ($exists) {
+        return response()->json(['message' => 'Este horário choca com outro agendamento!'], 409);
+    }
+
+    $appointment->update([
+        'barber_id' => $request->barber_id,
+        'service_id' => $request->service_id,
+        'start_time' => $startTime,
+        'end_time' => $endTime,
+    ]);
+
+    return response()->json(['message' => 'Agendamento atualizado com sucesso!']);
+}
 }
