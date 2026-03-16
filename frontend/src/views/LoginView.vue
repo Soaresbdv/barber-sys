@@ -19,7 +19,10 @@ const handleLogin = async () => {
       password: password.value
     })
     localStorage.setItem('token', response.data.access_token)
+    
     localStorage.setItem('user_role', response.data.user.role)
+    
+    localStorage.setItem('user', JSON.stringify(response.data.user))
     router.push('/')
   } catch (error: any) {
     if (error.response && error.response.status === 401) {
@@ -33,11 +36,11 @@ const handleLogin = async () => {
 }
 
 const backgroundImages = [
-  "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2074&auto=format&fit=crop", // Interior clássico escuro
-  "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Barbeiro P&B
-  "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070&auto=format&fit=crop", // Ferramentas na bancada
-  "https://images.unsplash.com/photo-1605497788044-5a32c7078486?q=80&w=1974&auto=format&fit=crop", // Corte em progresso
-  "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"  // Detalhe pincel de barba
+  "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2074&auto=format&fit=crop", 
+  "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", 
+  "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070&auto=format&fit=crop", 
+  "https://images.unsplash.com/photo-1605497788044-5a32c7078486?q=80&w=1974&auto=format&fit=crop", 
+  "https://images.unsplash.com/photo-1532710093739-9470acff878f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
 ]
 
 const currentImageIndex = ref(0)
