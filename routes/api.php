@@ -33,4 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/appointments/{id}', [SchedulingController::class, 'update']);
     // Rota para cancelar um agendamento
     Route::delete('/appointments/{id}', [SchedulingController::class, 'destroy']);
+
+    // Agenda barbeiro
+    // Rota para o barbeiro ver sua agenda
+    Route::get('/barber/agenda', [SchedulingController::class, 'barberAgenda']);
+    // Rota para o barbeiro atualizar o status de um agendamento
+    Route::patch('/appointments/{id}/status', [SchedulingController::class, 'updateStatus']);
 });

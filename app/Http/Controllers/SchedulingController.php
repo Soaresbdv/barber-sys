@@ -163,4 +163,39 @@ public function update(Request $request, $id)
 
     return response()->json(['message' => 'Agendamento atualizado com sucesso!']);
 }
+
+public function barberAgenda(Request $request)
+    {
+        if ($request->user()->role !== 'barber' && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Acesso negado. Área restrita para profissionais.'], 403);
+        }
+
+        $appointments = Appointment::with(['service', 'user'])
+            ->where('barber_id', $request->user()->id)
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        return response()->json($appointments);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        if ($request->user()->role !== 'barber' && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Acesso negado.'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:completed,canceled'
+        ]);
+
+        $appointment = Appointment::where('id', $id)
+            ->where('barber_id', $request->user()->id)
+            ->firstOrFail();
+
+        $appointment->update([
+            'status' => $request->status
+        ]);
+
+        return response()->json(['message' => 'Status atualizado com sucesso!']);
+    }
 }

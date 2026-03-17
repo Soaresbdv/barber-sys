@@ -18,12 +18,17 @@ const handleLogin = async () => {
       email: email.value,
       password: password.value
     })
+    
     localStorage.setItem('token', response.data.access_token)
-    
     localStorage.setItem('user_role', response.data.user.role)
-    
-    localStorage.setItem('user', JSON.stringify(response.data.user))
-    router.push('/')
+    localStorage.setItem('user', JSON.stringify(response.data.user)) 
+
+    if (response.data.user.role === 'barber' || response.data.user.role === 'admin') {
+      router.push('/barber/dashboard')
+    } else {
+      router.push('/')
+    }
+
   } catch (error: any) {
     if (error.response && error.response.status === 401) {
       errorMessage.value = 'Credenciais incorretas.'

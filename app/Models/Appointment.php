@@ -27,7 +27,7 @@ class Appointment extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-
+    
     public function barber()
     {
         return $this->belongsTo(User::class, 'barber_id');
@@ -36,5 +36,10 @@ class Appointment extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
