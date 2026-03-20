@@ -39,4 +39,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/barber/agenda', [SchedulingController::class, 'barberAgenda']);
     // Rota para o barbeiro atualizar o status de um agendamento
     Route::patch('/appointments/{id}/status', [SchedulingController::class, 'updateStatus']);
+
+    // Rotas de Bloqueio de Agenda (Profissional)
+    // Rota para listar os bloqueios do barbeiro
+    Route::get('/barber/blocks', [SchedulingController::class, 'getBlocks']);
+    // Rota para criar um bloqueio
+    Route::post('/barber/blocks', [SchedulingController::class, 'storeBlock']);
+    // Rota para deletar um bloqueio
+    Route::delete('/barber/blocks/{id}', [SchedulingController::class, 'deleteBlock']);
 });
