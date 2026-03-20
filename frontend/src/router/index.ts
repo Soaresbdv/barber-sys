@@ -4,10 +4,30 @@ import HomeView from '../views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'home',component: HomeView },
+    { path: '/', name: 'home', component: HomeView },
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
     { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue') },
-    { path: '/barber/dashboard', name: 'barber-dashboard', component: () => import('../views/BarberDashboardView.vue')},
+    
+    // Rota do barbeiro 
+    { 
+      path: '/barber/dashboard', 
+      name: 'barber-dashboard', 
+      component: () => import('../views/BarberDashboardView.vue'),
+      beforeEnter: (to, from, next) => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('user_role');
+        
+        if (!token) {
+          next('/login'); 
+        } else if (role !== 'barber' && role !== 'admin') {
+          next('/dashboard'); 
+        } else {
+          next(); 
+        }
+      }
+    },
+
+    // Rota do Cliente
     {
       path: '/dashboard',
       name: 'dashboard',
@@ -20,13 +40,18 @@ const router = createRouter({
         }
       }
     },
+
+    // Rota de Novo Agendamento
     {
       path: '/appointments/new',
       name: 'new-appointment',
       component: () => import('../views/NewAppointmentView.vue'),
-       beforeEnter: (to, from, next) => { 
-        if (!localStorage.getItem('token')) next('/login')
-        else next()
+      beforeEnter: (to, from, next) => { 
+        if (!localStorage.getItem('token')) {
+          next('/login')
+        } else {
+          next()
+        }
       }
     },
   ]
