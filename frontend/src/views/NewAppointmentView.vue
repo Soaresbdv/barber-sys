@@ -2,6 +2,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import { ptBR } from 'date-fns/locale'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const router = useRouter()
 const route = useRoute()
@@ -121,7 +124,6 @@ const confirmAppointment = async () => {
       await axios.post('http://localhost:8000/api/appointments', payload, config)
     }
 
-    alert('Agendamento salvo com sucesso!')
     router.push('/dashboard')
   } catch (error: any) {
     alert(error.response?.data?.message || 'Erro ao processar agendamento.')
@@ -136,126 +138,178 @@ const formatMoney = (val: any) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 font-sans pb-20">
+  <div class="min-h-screen bg-[#FBFBFB] font-sans pb-32 text-stone-800">
     
-    <nav class="bg-white border-b border-stone-200 px-6 py-4 mb-8">
-      <div class="max-w-3xl mx-auto flex justify-between items-center">
-        <h1 class="font-serif text-xl font-bold text-emerald-950 tracking-widest">
-          NOVO<span class="text-emerald-700">AGENDAMENTO</span>.
+    <nav class="bg-white border-b border-stone-100 px-8 py-5 sticky top-0 z-40 shadow-sm transition-all">
+      <div class="max-w-4xl mx-auto flex justify-between items-center">
+        <h1 class="font-serif text-2xl font-bold text-emerald-950 tracking-widest cursor-pointer" @click="router.push('/')">
+          BARBER<span class="text-emerald-600">SYS</span>
         </h1>
-        <button @click="router.push('/dashboard')" class="text-stone-500 hover:text-stone-800 font-bold text-sm uppercase">
+        <button @click="router.push('/dashboard')" class="text-[10px] font-black tracking-[0.2em] uppercase text-stone-400 hover:text-emerald-800 transition-colors flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Voltar
         </button>
       </div>
     </nav>
 
-    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <main class="max-w-3xl mx-auto px-6 py-12">
       
-      <section class="mb-10">
-        <h2 class="text-lg font-bold text-stone-700 uppercase tracking-wider mb-4 border-l-4 border-emerald-600 pl-3">
-          1. Escolha o Serviço
+      <header class="mb-12 text-center">
+        <h2 class="text-4xl font-serif text-stone-900 mb-2">
+          {{ isEditing ? 'Reagendar Horário' : 'Novo Agendamento' }}
         </h2>
+        <p class="text-stone-500 italic">Configure sua próxima experiência conosco.</p>
+      </header>
+
+      <section class="mb-12">
+        <div class="flex items-center gap-4 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-900 text-white font-serif font-bold text-sm shadow-md">1</span>
+          <h3 class="text-sm font-black text-stone-400 uppercase tracking-[0.2em]">O Serviço</h3>
+        </div>
+        
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div 
             v-for="service in services" 
             :key="service.id"
             @click="selectedService = service"
-            class="cursor-pointer border rounded-lg p-4 transition-all hover:shadow-md flex justify-between items-center"
-            :class="selectedService?.id === service.id ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600' : 'border-stone-200 bg-white'"
+            class="cursor-pointer bg-white p-5 border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex flex-col justify-between"
+            :class="selectedService?.id === service.id ? 'border-emerald-700 shadow-md' : 'border-stone-100 opacity-70 hover:opacity-100'"
           >
-            <div>
-              <h3 class="font-bold text-emerald-950">{{ service.name }}</h3>
-              <p class="text-xs text-stone-500">{{ service.duration_minutes }} min</p>
+            <div class="flex justify-between items-start mb-4">
+              <h4 class="font-bold text-lg text-emerald-950 uppercase tracking-tight">{{ service.name }}</h4>
+              <span class="font-serif text-xl font-bold text-emerald-800">{{ formatMoney(service.price) }}</span>
             </div>
-            <span class="font-serif font-bold text-emerald-800">{{ formatMoney(service.price) }}</span>
+            <p class="text-xs font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {{ service.duration_minutes }} minutos
+            </p>
           </div>
         </div>
       </section>
 
-      <section class="mb-10" v-if="selectedService">
-        <h2 class="text-lg font-bold text-stone-700 uppercase tracking-wider mb-4 border-l-4 border-emerald-600 pl-3">
-          2. Escolha o Profissional
-        </h2>
+      <section class="mb-12" :class="{ 'opacity-50 pointer-events-none grayscale transition-all duration-500': !selectedService }">
+        <div class="flex items-center gap-4 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-900 text-white font-serif font-bold text-sm shadow-md">2</span>
+          <h3 class="text-sm font-black text-stone-400 uppercase tracking-[0.2em]">O Profissional</h3>
+        </div>
+        
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div 
             v-for="barber in barbers" 
             :key="barber.id"
             @click="selectedBarber = barber"
-            class="cursor-pointer border rounded-lg p-4 transition-all hover:shadow-md text-center"
-            :class="selectedBarber?.id === barber.id ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600' : 'border-stone-200 bg-white'"
+            class="cursor-pointer bg-white p-6 border-2 transition-all duration-300 text-center flex flex-col items-center justify-center"
+            :class="selectedBarber?.id === barber.id ? 'border-emerald-700 shadow-md transform scale-105' : 'border-stone-100 hover:border-stone-300'"
           >
-            <div class="w-16 h-16 mx-auto bg-stone-200 rounded-full flex items-center justify-center mb-3 text-xl font-serif font-bold text-stone-600">
+            <div class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4 text-2xl font-serif font-bold text-emerald-900 shadow-inner">
               {{ barber.name.charAt(0) }}
             </div>
-            <h3 class="font-bold text-sm text-emerald-950">{{ barber.name }}</h3>
+            <h4 class="font-bold text-sm text-stone-800 uppercase tracking-wide">{{ barber.name }}</h4>
           </div>
         </div>
       </section>
 
-      <section class="mb-10" v-if="selectedBarber">
-        <h2 class="text-lg font-bold text-stone-700 uppercase tracking-wider mb-4 border-l-4 border-emerald-600 pl-3">
-          3. Escolha o Horário
-        </h2>
+      <section class="mb-12" :class="{ 'opacity-50 pointer-events-none grayscale transition-all duration-500': !selectedBarber }">
+        <div class="flex items-center gap-4 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-900 text-white font-serif font-bold text-sm shadow-md">3</span>
+          <h3 class="text-sm font-black text-stone-400 uppercase tracking-[0.2em]">O Momento</h3>
+        </div>
         
-        <div class="bg-white p-6 rounded-lg border border-stone-200 shadow-sm">
-          <div class="mb-6">
-            <label class="block text-sm font-bold text-stone-500 uppercase mb-2">Data Desejada</label>
-            <input 
-              type="date" 
-              v-model="selectedDate"
-              class="w-full border-stone-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 p-3 bg-stone-50 font-bold text-stone-700"
-            >
+        <div class="bg-white p-8 border border-stone-100 shadow-sm relative">
+          <div class="absolute top-0 left-0 w-1 h-full bg-emerald-800"></div>
+
+          <div class="mb-8 max-w-sm">
+            <label class="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-3">Selecione a Data</label>
+            
+            <VueDatePicker 
+              v-model="selectedDate" 
+              model-type="yyyy-MM-dd"
+              :min-date="new Date()"
+              :format-locale="ptBR"
+              auto-apply
+              :format="'dd/MM/yyyy'"
+              teleport="body"
+              input-class-name="w-full border-b-2 border-stone-200 py-2 text-lg font-serif font-bold text-emerald-950 focus:outline-none focus:border-emerald-700 transition-colors bg-transparent shadow-none rounded-none cursor-pointer"
+            ></VueDatePicker>
           </div>
 
-          <div v-if="calculating" class="text-center py-8 text-stone-500 italic">
-            Verificando disponibilidade...
+          <div v-if="calculating" class="py-12 text-center animate-pulse">
+            <p class="font-serif italic text-stone-400 text-lg">Consultando a agenda do profissional...</p>
           </div>
 
-          <div v-else-if="selectedDate">
+          <div v-else-if="selectedDate" class="transition-all duration-500">
+            <p class="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-4">Horários Disponíveis</p>
+            
             <div v-if="availableSlots.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               <button 
                 v-for="slot in availableSlots" 
                 :key="slot"
                 @click="selectedTime = slot"
-                class="py-2 px-1 rounded text-sm font-bold border transition-colors"
-                :class="selectedTime === slot ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-stone-700 border-stone-300 hover:border-emerald-500'"
+                class="py-3 text-sm font-bold border transition-all duration-200 rounded-sm"
+                :class="selectedTime === slot ? 'bg-emerald-900 text-white border-emerald-900 shadow-md scale-105' : 'bg-white text-stone-600 border-stone-200 hover:border-emerald-600 hover:text-emerald-800'"
               >
                 {{ slot }}
               </button>
             </div>
-            <div v-else class="text-center py-4 text-amber-600 bg-amber-50 rounded border border-amber-200">
-              Nenhum horário disponível para esta data. Tente outro dia.
+            
+            <div v-else class="text-center py-8 border-2 border-dashed border-stone-200 bg-stone-50">
+              <p class="font-serif italic text-stone-500 text-lg">Infelizmente, a agenda está lotada para este dia.</p>
+              <p class="text-xs text-stone-400 mt-2 uppercase font-bold tracking-widest">Tente selecionar outra data</p>
             </div>
           </div>
         </div>
       </section>
 
-      <div v-if="selectedTime" class="fixed bottom-0 left-0 w-full bg-white border-t border-stone-200 p-4 shadow-2xl z-50">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-          <div class="hidden sm:block">
-            <p class="text-xs text-stone-500 uppercase font-bold">Resumo</p>
-            <p class="text-sm font-bold text-emerald-950">
-              {{ selectedService.name }} com {{ selectedBarber.name }}
-            </p>
-            <p class="text-xs text-stone-500">
-               {{ selectedDate.split('-').reverse().join('/') }} às {{ selectedTime }}
-            </p>
+    </main>
+
+    <Transition name="slide-up">
+      <div v-if="selectedTime" class="fixed bottom-0 left-0 w-full bg-emerald-950 border-t-4 border-emerald-700 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center px-4">
+          
+          <div class="hidden sm:flex flex-col text-white">
+            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">Resumo do Agendamento</span>
+            <div class="flex items-center gap-4">
+              <span class="font-serif text-xl font-bold">{{ selectedService.name }}</span>
+              <span class="text-emerald-500/50">|</span>
+              <span class="font-bold text-sm tracking-wide">{{ selectedBarber.name }}</span>
+              <span class="text-emerald-500/50">|</span>
+              <span class="font-bold text-sm tracking-wide bg-emerald-900 px-3 py-1 rounded-sm">
+                 {{ selectedDate.split('-').reverse().join('/') }} às {{ selectedTime }}
+              </span>
+            </div>
           </div>
-          <div class="sm:hidden">
-             <p class="text-sm font-bold text-emerald-950">{{ selectedTime }}</p>
-             <p class="text-xs font-serif">{{ formatMoney(selectedService.price) }}</p>
+
+          <div class="sm:hidden flex flex-col text-white">
+             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">{{ selectedDate.split('-').reverse().join('/') }}</span>
+             <span class="font-serif text-xl font-bold">{{ selectedTime }}</span>
           </div>
 
           <button 
             @click="confirmAppointment"
             :disabled="loading"
-            class="bg-emerald-900 hover:bg-emerald-800 text-white font-bold py-3 px-8 rounded-sm uppercase tracking-widest shadow-lg transition-transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            class="bg-white text-emerald-950 hover:bg-stone-100 py-4 px-8 text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-xl"
           >
-            {{ loading ? 'Agendando...' : 'Confirmar' }}
+            {{ loading ? 'Processando...' : 'Confirmar Reserva' }}
           </button>
         </div>
       </div>
+    </Transition>
 
-    </div>
   </div>
 </template>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;700;900&display=swap');
+.font-serif { font-family: 'Playfair Display', serif; }
+.font-sans { font-family: 'Inter', sans-serif; }
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+</style>
