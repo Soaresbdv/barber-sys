@@ -38,23 +38,51 @@ class AdminController extends Controller
             return $app->service ? $app->service->price : 0;
         });
 
-        $expenses = Expense::whereMonth('expense_date', $currentMonth)
+        $allExpenses = Expense::whereMonth('expense_date', $currentMonth)
             ->whereYear('expense_date', $currentYear)
-            ->sum('amount');
+            ->get();
+        $expenses = $allExpenses->sum('amount');
 
         $profit = $revenue - $expenses;
-
         $totalAppointments = $completedAppointments->count() + $scheduledAppointments->count();
 
+        $daysInMonth = Carbon::now()->daysInMonth;
+        $chartLabels = [];
+        $chartRevenue = [];
+        $chartExpenses = [];
+
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $chartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT); 
+            $dayDate = Carbon::now()->setDay($i)->format('Y-m-d');
+            
+            $dayRev = $completedAppointments->filter(function($app) use ($dayDate) {
+                return Carbon::parse($app->start_time)->format('Y-m-d') === $dayDate;
+            })->sum(function($app) {
+                return $app->service ? $app->service->price : 0;
+            });
+
+            $dayExp = $allExpenses->filter(function($exp) use ($dayDate) {
+                return Carbon::parse($exp->expense_date)->format('Y-m-d') === $dayDate;
+            })->sum('amount');
+
+            $chartRevenue[] = $dayRev;
+            $chartExpenses[] = $dayExp;
+        }
+
         return response()->json([
-            'current_month' => Carbon::now()->translatedFormat('F/Y'), 
+            'current_month' => Carbon::now()->translatedFormat('F/Y'),
             'metrics' => [
                 'revenue' => $revenue,
                 'forecast' => $forecast,
-                'total_projected' => $revenue + $forecast, 
+                'total_projected' => $revenue + $forecast,
                 'expenses' => $expenses,
                 'profit' => $profit,
                 'total_appointments' => $totalAppointments
+            ],
+            'chart' => [
+                'labels' => $chartLabels,
+                'revenue' => $chartRevenue,
+                'expenses' => $chartExpenses
             ]
         ]);
     }

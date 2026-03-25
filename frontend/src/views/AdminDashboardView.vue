@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import VueApexCharts from 'vue3-apexcharts'
+import type { ApexOptions } from 'apexcharts' 
 
 const router = useRouter()
 const metrics = ref<any>(null)
@@ -14,6 +16,37 @@ const expenseForm = ref({
   amount: '',
   expense_date: new Date().toISOString().split('T')[0],
   category: 'geral'
+})
+
+const chartSeries = ref<any[]>([])
+const chartOptions = ref<ApexOptions>({
+  chart: {
+    type: 'area',
+    fontFamily: 'Inter, sans-serif',
+    toolbar: { show: false },
+    zoom: { enabled: false }
+  },
+  colors: ['#047857', '#ef4444'], 
+  dataLabels: { enabled: false },
+  stroke: { curve: 'smooth', width: 2 },
+  fill: {
+    type: 'gradient',
+    gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] }
+  },
+  xaxis: {
+    categories: [],
+    labels: { style: { colors: '#a8a29e' } }, 
+    axisBorder: { show: false },
+    axisTicks: { show: false }
+  },
+  yaxis: {
+    labels: {
+      style: { colors: '#a8a29e' },
+      formatter: (value: number) => `R$ ${value.toFixed(0)}`
+    }
+  },
+    grid: { borderColor: '#f5f5f4', strokeDashArray: 4 }, // stone-100
+    legend: { position: 'top', horizontalAlign: 'right' }
 })
 
 onMounted(() => {
@@ -33,6 +66,16 @@ const fetchDashboardData = async () => {
     
     metrics.value = resMetrics.data
     expenses.value = resExpenses.data
+
+    chartSeries.value = [
+      { name: 'Receita (R$)', data: resMetrics.data.chart.revenue },
+      { name: 'Despesas (R$)', data: resMetrics.data.chart.expenses }
+    ]
+    chartOptions.value = {
+      ...chartOptions.value,
+      xaxis: { ...chartOptions.value.xaxis, categories: resMetrics.data.chart.labels }
+    }
+
   } catch (error) {
     console.error('Erro ao buscar dados do painel', error)
   } finally {
@@ -51,7 +94,7 @@ const submitExpense = async () => {
     expenseForm.value.description = ''
     expenseForm.value.amount = ''
     
-    await fetchDashboardData()
+    await fetchDashboardData() 
     alert('Despesa registrada com sucesso!')
   } catch (error) {
     alert('Erro ao registrar despesa.')
@@ -101,8 +144,7 @@ const formatDate = (dateString: string) => {
         </div>
       </header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white p-6 border-l-4 border-emerald-600 shadow-sm rounded-sm">
           <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Faturamento (Realizado)</p>
           <p class="text-3xl font-serif text-emerald-950">{{ formatMoney(metrics.metrics.revenue) }}</p>
@@ -128,20 +170,25 @@ const formatDate = (dateString: string) => {
           </p>
           <p class="text-xs text-stone-400 mt-2 font-medium">Receita menos Despesas</p>
         </div>
+      </div>
 
+      <div class="bg-white p-6 border border-stone-200 shadow-sm rounded-sm mb-12 relative z-0">
+        <h3 class="font-serif text-xl text-stone-900 mb-1">Evolução do Mês</h3>
+        <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-6">Comparativo Diário de Receitas x Despesas</p>
+        
+        <div class="h-[350px]">
+          <VueApexCharts type="area" height="100%" :options="chartOptions" :series="chartSeries"></VueApexCharts>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         <div class="lg:col-span-1 bg-white p-8 border border-stone-200 shadow-sm">
           <h3 class="font-serif text-xl text-stone-900 mb-6 border-b border-stone-100 pb-4">Lançar Despesa</h3>
-          
           <form @submit.prevent="submitExpense" class="space-y-5">
             <div>
               <label class="block text-[10px] font-black text-stone-500 uppercase tracking-widest mb-1">Descrição</label>
               <input type="text" v-model="expenseForm.description" required placeholder="Ex: Conta de Luz" class="w-full border-b-2 border-stone-200 py-2 focus:outline-none focus:border-emerald-600 bg-transparent">
             </div>
-            
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-[10px] font-black text-stone-500 uppercase tracking-widest mb-1">Valor (R$)</label>
@@ -152,7 +199,6 @@ const formatDate = (dateString: string) => {
                 <input type="date" v-model="expenseForm.expense_date" required class="w-full border-b-2 border-stone-200 py-2 focus:outline-none focus:border-emerald-600 bg-transparent text-sm">
               </div>
             </div>
-
             <div>
               <label class="block text-[10px] font-black text-stone-500 uppercase tracking-widest mb-1">Categoria</label>
               <select v-model="expenseForm.category" class="w-full border-b-2 border-stone-200 py-2 focus:outline-none focus:border-emerald-600 bg-transparent text-sm cursor-pointer">
@@ -163,7 +209,6 @@ const formatDate = (dateString: string) => {
                 <option value="geral">Geral / Outros</option>
               </select>
             </div>
-
             <button type="submit" :disabled="isSubmitting" class="w-full mt-4 bg-emerald-900 text-white text-[10px] font-black uppercase tracking-widest py-4 hover:bg-emerald-800 transition-colors shadow-md disabled:opacity-50">
               {{ isSubmitting ? 'Registrando...' : 'Salvar Despesa' }}
             </button>
@@ -172,10 +217,9 @@ const formatDate = (dateString: string) => {
 
         <div class="lg:col-span-2 bg-white p-8 border border-stone-200 shadow-sm">
           <h3 class="font-serif text-xl text-stone-900 mb-6 border-b border-stone-100 pb-4">Histórico de Saídas</h3>
-          
-          <div v-if="expenses.length > 0" class="overflow-x-auto">
+          <div v-if="expenses.length > 0" class="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table class="w-full text-left border-collapse">
-              <thead>
+              <thead class="sticky top-0 bg-white">
                 <tr>
                   <th class="py-3 px-4 border-b border-stone-200 text-[10px] font-black text-stone-400 uppercase tracking-widest">Data</th>
                   <th class="py-3 px-4 border-b border-stone-200 text-[10px] font-black text-stone-400 uppercase tracking-widest">Descrição</th>
@@ -199,14 +243,12 @@ const formatDate = (dateString: string) => {
             <p class="font-serif italic text-stone-400">Nenhuma despesa registrada ainda.</p>
           </div>
         </div>
-
       </div>
     </main>
     
     <div v-else class="min-h-screen flex items-center justify-center">
       <p class="font-serif italic text-stone-400 text-xl animate-pulse">Carregando métricas financeiras...</p>
     </div>
-
   </div>
 </template>
 
@@ -214,4 +256,9 @@ const formatDate = (dateString: string) => {
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;700;900&display=swap');
 .font-serif { font-family: 'Playfair Display', serif; }
 .font-sans { font-family: 'Inter', sans-serif; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e7e5e4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #d6d3d1; }
 </style>
