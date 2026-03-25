@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Notifications\NewAppointmentNotification;
 
 class SchedulingController extends Controller
 {
@@ -150,6 +151,23 @@ class SchedulingController extends Controller
             'end_time' => $endTime,
             'status' => 'scheduled'
         ]);
+
+
+
+        $appointment = Appointment::create([
+            'user_id' => $request->user()->id,
+            'barber_id' => $request->barber_id,
+            'service_id' => $request->service_id,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'status' => 'scheduled'
+        ]);
+
+        $barber = User::find($request->barber_id);
+        if ($barber) {
+            $clientName = $request->user()->name; 
+            $barber->notify(new NewAppointmentNotification($appointment, $clientName));
+        }
 
         return response()->json(['message' => 'Agendamento realizado com sucesso!']);
     }

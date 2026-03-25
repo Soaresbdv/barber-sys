@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rota para excluir um barbeiro
     Route::delete('/admin/barbers/{id}', [\App\Http\Controllers\AdminController::class, 'destroyBarber']);
 
-    // Rotas de Gestão de Serviços //
+    // Rotas de Gestão de Serviços (Admin)//
     // Rota para listar serviços
     Route::get('/admin/services', [\App\Http\Controllers\AdminController::class, 'getServices']);
     // Rota para criar um novo serviço
@@ -75,4 +75,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/services/{id}', [\App\Http\Controllers\AdminController::class, 'updateService']);
     // Rota para excluir um serviço
     Route::delete('/admin/services/{id}', [\App\Http\Controllers\AdminController::class, 'destroyService']);
+
+    // Rotas de Notificações //
+    // Rota para listar notificações não lidas do usuário
+    Route::get('/notifications/unread', [\App\Http\Controllers\NotificationController::class, 'unread']);
+    // Rota para marcar uma notificação como lida
+    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
 });

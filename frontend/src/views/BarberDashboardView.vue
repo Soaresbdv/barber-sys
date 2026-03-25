@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { ref, onMounted, onUnmounted } from 'vue' 
 
 interface Appointment {
   id: number;
@@ -38,6 +38,13 @@ onMounted(() => {
   }
   fetchAgenda()
   fetchBlocks() 
+  fetchNotifications()
+
+  pollingInterval = setInterval(fetchNotifications, 30000) 
+})
+
+onUnmounted(() => {
+  if (pollingInterval) clearInterval(pollingInterval)
 })
 
 const fetchAgenda = async () => {
@@ -142,23 +149,105 @@ const formatBlockDate = (dateString: string) => {
   const [year, month, day] = dateString.split('-');
   return `${day}/${month}/${year}`;
 }
+
+const notifications = ref<any[]>([])
+const showNotifications = ref(false)
+let pollingInterval: any = null
+
+const fetchNotifications = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await axios.get('http://localhost:8000/api/notifications/unread', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    notifications.value = response.data
+  } catch (error) {
+    console.error('Erro ao buscar notificações', error)
+  }
+}
+
+const markAsRead = async (id: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    await axios.patch(`http://localhost:8000/api/notifications/${id}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    
+    notifications.value = notifications.value.filter(n => n.id !== id)
+    
+    if (notifications.value.length === 0) showNotifications.value = false
+    
+  } catch (error) {
+    console.error('Erro ao marcar como lida', error)
+  }
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-[#FBFBFB] text-stone-800 font-sans relative">
     
-    <nav class="bg-white border-b border-stone-100 px-8 py-5 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+    <nav class="bg-white border-b border-stone-200 px-8 py-5 flex justify-between items-center sticky top-0 z-40">
       <div class="flex items-center gap-4">
         <h1 class="font-serif text-2xl font-bold text-emerald-950 tracking-widest">
-          BARBER<span class="text-emerald-600">SYS</span>
+          BARBER<span class="text-emerald-700">SYS</span>
         </h1>
         <span class="bg-emerald-900 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-sm ml-2">
           Profissional
         </span>
       </div>
-      <button @click="handleLogout" :disabled="isLoading" class="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400 hover:text-red-600 transition-colors">
-        Sair
-      </button>
+
+      <div class="flex items-center gap-8 relative">
+        
+        <div class="relative">
+          <button @click="showNotifications = !showNotifications" class="text-stone-400 hover:text-emerald-600 transition-colors relative pt-1 outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'animate-pulse text-emerald-600': notifications.length > 0}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span v-if="notifications.length > 0" class="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white shadow-sm">
+              {{ notifications.length }}
+            </span>
+          </button>
+
+          <div v-if="showNotifications" class="absolute right-0 mt-4 w-80 bg-white border border-stone-200 shadow-2xl rounded-sm overflow-hidden z-50 transition-all">
+            <div class="bg-stone-50 px-4 py-3 border-b border-stone-100 flex justify-between items-center">
+              <h3 class="text-[10px] font-black uppercase tracking-widest text-stone-500">Notificações</h3>
+              <span v-if="notifications.length > 0" class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-sm">{{ notifications.length }} novas</span>
+            </div>
+            
+            <div class="max-h-80 overflow-y-auto">
+              <div v-if="notifications.length === 0" class="px-4 py-8 text-center">
+                <p class="text-xs text-stone-400 font-medium">Você está em dia! Nenhuma novidade.</p>
+              </div>
+              
+              <button 
+                v-for="notif in notifications" 
+                :key="notif.id"
+                @click="markAsRead(notif.id)"
+                class="w-full text-left px-4 py-4 border-b border-stone-50 hover:bg-stone-50 transition-colors flex gap-3 items-start group"
+              >
+                <div class="mt-0.5 bg-emerald-100 text-emerald-600 p-1.5 rounded-full group-hover:bg-emerald-200 group-hover:scale-110 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-stone-800 leading-tight mb-1">{{ notif.data.message }}</p>
+                  <p class="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">
+                    {{ new Date(notif.data.start_time).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) }}
+                  </p>
+                  <p class="text-[9px] font-bold text-stone-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
+                    Clique para marcar como lida
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button @click="handleLogout" class="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400 hover:text-red-600 transition-colors">
+          Sair
+        </button>
+      </div>
     </nav>
 
     <main class="max-w-5xl mx-auto py-12 px-6">
