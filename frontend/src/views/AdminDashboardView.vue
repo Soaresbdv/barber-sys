@@ -132,9 +132,16 @@ const formatDate = (dateString: string) => {
       </div>
       
       <div class="flex items-center gap-6">
-        <button @click="router.push('/admin/barbers')" class="text-[10px] font-bold tracking-[0.2em] uppercase text-emerald-400 hover:text-emerald-300 transition-colors">
+        <button @click="router.push('/admin/dashboard')" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-emerald-400 transition-colors">
+          Dashboard
+        </button>
+        <button @click="router.push('/admin/barbers')" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-emerald-400 transition-colors">
           Equipe
         </button>
+        <button @click="router.push('/admin/services')" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-emerald-400 transition-colors">
+          Serviços
+        </button>
+        <div class="w-px h-4 bg-stone-700 mx-2"></div>
         <button @click="handleLogout" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-white transition-colors">
           Sair
         </button>

@@ -65,4 +65,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/barbers', [\App\Http\Controllers\AdminController::class, 'storeBarber']);
     // Rota para excluir um barbeiro
     Route::delete('/admin/barbers/{id}', [\App\Http\Controllers\AdminController::class, 'destroyBarber']);
+
+    // Rotas de Gestão de Serviços //
+    // Rota para listar serviços
+    Route::get('/admin/services', [\App\Http\Controllers\AdminController::class, 'getServices']);
+    // Rota para criar um novo serviço
+    Route::post('/admin/services', [\App\Http\Controllers\AdminController::class, 'storeService']);
+    // Rota para atualizar um serviço existente
+    Route::put('/admin/services/{id}', [\App\Http\Controllers\AdminController::class, 'updateService']);
+    // Rota para excluir um serviço
+    Route::delete('/admin/services/{id}', [\App\Http\Controllers\AdminController::class, 'destroyService']);
 });

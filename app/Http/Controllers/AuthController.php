@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Service;
 
 class AuthController extends Controller
 {
@@ -61,5 +62,53 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Deslogado com sucesso']);
+    }
+
+    public function getServices(Request $request)
+    {
+        if ($request->user()->role !== 'admin') return response()->json(['message' => 'Acesso negado.'], 403);
+        
+        return Service::orderBy('name', 'asc')->get();
+    }
+
+    public function storeService(Request $request)
+    {
+        if ($request->user()->role !== 'admin') return response()->json(['message' => 'Acesso negado.'], 403);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration_minutes' => 'required|integer|min:1'
+        ]);
+
+        $service = Service::create($request->all());
+
+        return response()->json(['message' => 'Serviço criado com sucesso!', 'service' => $service]);
+    }
+
+    public function updateService(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') return response()->json(['message' => 'Acesso negado.'], 403);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration_minutes' => 'required|integer|min:1'
+        ]);
+
+        $service = Service::findOrFail($id);
+        $service->update($request->all());
+
+        return response()->json(['message' => 'Serviço atualizado com sucesso!', 'service' => $service]);
+    }
+
+    public function destroyService(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') return response()->json(['message' => 'Acesso negado.'], 403);
+
+        $service = Service::findOrFail($id);
+        $service->delete();
+
+        return response()->json(['message' => 'Serviço removido com sucesso!']);
     }
 }
