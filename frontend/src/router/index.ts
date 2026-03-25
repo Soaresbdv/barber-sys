@@ -54,6 +54,25 @@ const router = createRouter({
         }
       }
     },
+
+    // Rota do Admin
+    { 
+      path: '/admin/dashboard', 
+      name: 'admin-dashboard', 
+      component: () => import('../views/AdminDashboardView.vue'),
+      beforeEnter: (to, from, next) => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('user_role');
+        
+        if (!token) {
+          next('/login');
+        } else if (role !== 'admin') {
+          next('/dashboard'); 
+        } else {
+          next();
+        }
+      }
+    },
   ]
 })
 
