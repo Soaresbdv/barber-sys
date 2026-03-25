@@ -123,16 +123,22 @@ const formatDate = (dateString: string) => {
     
     <nav class="bg-stone-900 border-b border-stone-800 px-8 py-5 flex justify-between items-center sticky top-0 z-40 shadow-md">
       <div class="flex items-center gap-4">
-        <h1 class="font-serif text-2xl font-bold text-white tracking-widest">
+        <h1 class="font-serif text-2xl font-bold text-white tracking-widest cursor-pointer" @click="router.push('/admin/dashboard')">
           BARBER<span class="text-emerald-500">SYS</span>
         </h1>
         <span class="bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-sm ml-2">
           Admin
         </span>
       </div>
-      <button @click="handleLogout" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-white transition-colors">
-        Sair do Sistema
-      </button>
+      
+      <div class="flex items-center gap-6">
+        <button @click="router.push('/admin/barbers')" class="text-[10px] font-bold tracking-[0.2em] uppercase text-emerald-400 hover:text-emerald-300 transition-colors">
+          Equipe
+        </button>
+        <button @click="handleLogout" class="text-[10px] font-bold tracking-[0.2em] uppercase text-stone-400 hover:text-white transition-colors">
+          Sair
+        </button>
+      </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 py-12" v-if="!isLoading && metrics">

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\Expense;
 use Carbon\Carbon;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -108,5 +110,53 @@ class AdminController extends Controller
         $expense = Expense::create($request->all());
 
         return response()->json(['message' => 'Despesa registrada com sucesso!', 'expense' => $expense]);
+    }
+
+    public function getBarbers(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Acesso negado.'], 403);
+        }
+        
+        return User::where('role', 'barber')->orderBy('name', 'asc')->get();
+    }
+
+    public function storeBarber(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Acesso negado.'], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $barber = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'barber', 
+        ]);
+
+        return response()->json(['message' => 'Profissional cadastrado com sucesso!', 'barber' => $barber]);
+    }
+
+    public function destroyBarber(Request $request, $id)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Acesso negado.'], 403);
+        }
+
+        $barber = User::findOrFail($id);
+        
+        if ($barber->role === 'admin') {
+            return response()->json(['message' => 'Você não pode excluir um administrador.'], 403);
+        }
+
+        $barber->delete();
+
+        return response()->json(['message' => 'Profissional removido com sucesso!']);
     }
 }

@@ -73,6 +73,24 @@ const router = createRouter({
         }
       }
     },
+    // Rota de Gestão de Barbeiros (Admin)
+    { 
+      path: '/admin/barbers', 
+      name: 'admin-barbers', 
+      component: () => import('../views/AdminBarbersView.vue'),
+      beforeEnter: (to, from, next) => {
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('user_role');
+        
+        if (!token) {
+          next('/login');
+        } else if (role !== 'admin') {
+          next('/dashboard'); 
+        } else {
+          next();
+        }
+      }
+    },
   ]
 })
 

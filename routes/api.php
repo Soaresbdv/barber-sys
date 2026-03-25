@@ -57,4 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/expenses', [\App\Http\Controllers\AdminController::class, 'getExpenses']);
     // Rota para criar uma nova despesa
     Route::post('/admin/expenses', [\App\Http\Controllers\AdminController::class, 'storeExpense']);
+    
+    // Rotas de Gestão de Barbeiros (Admin) //
+    // Rota para listar barbeiros
+    Route::get('/admin/barbers', [\App\Http\Controllers\AdminController::class, 'getBarbers']);
+    // Rota para criar um novo barbeiro
+    Route::post('/admin/barbers', [\App\Http\Controllers\AdminController::class, 'storeBarber']);
+    // Rota para excluir um barbeiro
+    Route::delete('/admin/barbers/{id}', [\App\Http\Controllers\AdminController::class, 'destroyBarber']);
 });
