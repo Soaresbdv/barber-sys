@@ -77,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/services/{id}', [\App\Http\Controllers\AdminController::class, 'destroyService']);
 
     // Rotas de Notificações //
+    // Rota para o Histórico Completo (NOVA)
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index']);
     // Rota para listar notificações não lidas do usuário
     Route::get('/notifications/unread', [\App\Http\Controllers\NotificationController::class, 'unread']);
     // Rota para marcar uma notificação como lida

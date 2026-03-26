@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Notifications\NewAppointmentNotification;
+use App\Notifications\CanceledAppointmentNotification; 
 
 class SchedulingController extends Controller
 {
@@ -143,17 +144,6 @@ class SchedulingController extends Controller
             return response()->json(['message' => 'Este horário está bloqueado pelo profissional.'], 409);
         }
 
-        Appointment::create([
-            'user_id' => $request->user()->id,
-            'barber_id' => $request->barber_id,
-            'service_id' => $request->service_id,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'status' => 'scheduled'
-        ]);
-
-
-
         $appointment = Appointment::create([
             'user_id' => $request->user()->id,
             'barber_id' => $request->barber_id,
@@ -175,7 +165,15 @@ class SchedulingController extends Controller
     public function destroy($id)
     {
         $appointment = auth()->user()->appointments()->findOrFail($id);
+
+        $barber = User::find($appointment->barber_id);
+        if ($barber) {
+            $clientName = auth()->user()->name;
+            $barber->notify(new CanceledAppointmentNotification($clientName, $appointment->start_time));
+        }
+
         $appointment->delete(); 
+        
         return response()->json(['message' => 'Agendamento cancelado com sucesso.']);
     }
 
