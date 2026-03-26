@@ -83,4 +83,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread', [\App\Http\Controllers\NotificationController::class, 'unread']);
     // Rota para marcar uma notificação como lida
     Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+
+    // Rotas de Perfil do Usuário //
+    // Rota para atualizar nome e senha
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update']);
+    // Rota para upload da foto de perfil
+    Route::post('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'uploadAvatar']);
+
 });
