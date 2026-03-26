@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -16,6 +16,7 @@ interface Appointment {
 const router = useRouter()
 const appointments = ref<Appointment[]>([]) 
 const isLoading = ref(false)
+const activeTab = ref<'upcoming' | 'history'>('upcoming') 
 
 onMounted(async () => {
   const token = localStorage.getItem('token')
@@ -36,6 +37,14 @@ const fetchAppointments = async () => {
     console.error('Erro ao buscar agendamentos', error)
   }
 }
+
+const upcomingAppointments = computed(() => {
+  return appointments.value.filter(apt => apt.status === 'scheduled')
+})
+
+const historyAppointments = computed(() => {
+  return appointments.value.filter(apt => apt.status === 'completed' || apt.status === 'canceled')
+})
 
 const handleLogout = async () => {
   isLoading.value = true
@@ -79,17 +88,20 @@ const formatStatus = (status: string) => {
 }
 
 const editAppointment = (apt: Appointment) => {
-  router.push({ path: '/appointments/new', query: { edit: apt.id } })
+  router.push({ path: '/appointments/new', query: { edit: apt.id.toString() } })
 }
 
 const cancelAppointment = async (id: number) => {
-  if (!confirm('Deseja cancelar?')) return
+  if (!confirm('Deseja realmente cancelar este horário?')) return
   try {
     const token = localStorage.getItem('token')
     await axios.delete(`http://localhost:8000/api/appointments/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    fetchAppointments() 
+    
+    const apt = appointments.value.find(a => a.id === id)
+    if (apt) apt.status = 'canceled'
+    
   } catch (error) {
     alert('Erro ao cancelar')
   }
@@ -98,6 +110,7 @@ const cancelAppointment = async (id: number) => {
 
 <template>
   <div class="min-h-screen bg-[#FBFBFB] text-stone-800 font-sans">
+    
     <nav class="bg-white border-b border-stone-100 px-8 py-5 flex justify-between items-center sticky top-0 z-50 shadow-sm">
       <div class="flex items-center gap-8">
         <h1 @click="router.push('/')" class="font-serif text-2xl font-bold text-emerald-950 tracking-widest cursor-pointer">
@@ -118,29 +131,51 @@ const cancelAppointment = async (id: number) => {
     </nav>
 
     <main class="max-w-4xl mx-auto py-16 px-6">
-      <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 class="text-4xl font-serif text-stone-900 mb-2">Painel de Controle</h2>
-          <p class="text-stone-500 italic">Bem-vindo! Gerencie seus horários com facilidade.</p>
+          <h2 class="text-4xl font-serif text-stone-900 mb-2">Seus Cortes</h2>
+          <p class="text-stone-500 italic">Acompanhe e gerencie seus horários na barbearia.</p>
         </div>
         <button @click="router.push('/appointments/new')" class="bg-emerald-900 hover:bg-emerald-800 text-white text-[10px] font-black uppercase tracking-widest px-8 py-4 transition-transform active:scale-95 shadow-md">
           Novo Agendamento
         </button>
       </header>
 
-      <div v-if="appointments.length > 0" class="space-y-4">
-        <div v-for="apt in appointments" :key="apt.id" 
-          class="bg-white border border-stone-100 p-8 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:border-emerald-200 transition-all duration-300">
+      <div class="flex gap-4 border-b border-stone-200 mb-8">
+        <button @click="activeTab = 'upcoming'"
+          class="pb-3 text-[10px] font-black uppercase tracking-widest transition-colors"
+          :class="activeTab === 'upcoming' ? 'text-emerald-700 border-b-2 border-emerald-600' : 'text-stone-400 hover:text-stone-600'">
+          Próximos Horários <span v-if="upcomingAppointments.length" class="ml-1 bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-sm">{{ upcomingAppointments.length }}</span>
+        </button>
+        <button @click="activeTab = 'history'"
+          class="pb-3 text-[10px] font-black uppercase tracking-widest transition-colors"
+          :class="activeTab === 'history' ? 'text-stone-800 border-b-2 border-stone-800' : 'text-stone-400 hover:text-stone-600'">
+          Histórico <span v-if="historyAppointments.length" class="ml-1 bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-sm">{{ historyAppointments.length }}</span>
+        </button>
+      </div>
+
+      <div v-if="(activeTab === 'upcoming' ? upcomingAppointments : historyAppointments).length > 0" class="space-y-4">
+        
+        <div v-for="apt in (activeTab === 'upcoming' ? upcomingAppointments : historyAppointments)" :key="apt.id" 
+          class="bg-white border p-6 flex flex-col md:flex-row md:items-center justify-between shadow-sm transition-all duration-300"
+          :class="apt.status === 'scheduled' ? 'border-stone-200 hover:border-emerald-300' : 'border-stone-100 bg-stone-50/50 opacity-80'">
           
           <div class="space-y-2">
             <div class="flex items-center gap-3">
-              <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600 bg-emerald-50 px-2 py-1 rounded-sm">
+              <span class="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-sm"
+                :class="{
+                  'bg-emerald-100 text-emerald-700': apt.status === 'scheduled',
+                  'bg-stone-200 text-stone-600': apt.status === 'completed',
+                  'bg-red-100 text-red-600': apt.status === 'canceled'
+                }">
                 {{ formatStatus(apt.status) }}
               </span>
             </div>
-            <h4 class="text-xl font-serif text-stone-800 tracking-tight">
+            
+            <h4 class="text-xl font-serif text-stone-800 tracking-tight" :class="{'line-through text-stone-400': apt.status === 'canceled'}">
               {{ apt.service?.name || 'Serviço Profissional' }}
             </h4>
+            
             <p class="text-stone-500 text-sm flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -149,23 +184,24 @@ const cancelAppointment = async (id: number) => {
             </p>
           </div>
 
-          <div class="flex items-center gap-8 mt-6 md:mt-0 pt-6 md:pt-0 border-t md:border-t-0 border-stone-50">
-            <button v-if="apt.status === 'scheduled'" @click="editAppointment(apt)" 
-              class="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors">
+          <div v-if="apt.status === 'scheduled'" class="flex items-center gap-8 mt-6 md:mt-0 pt-6 md:pt-0 border-t md:border-t-0 border-stone-100">
+            <button @click="editAppointment(apt)" 
+              class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-800 transition-colors">
               Editar
             </button>
-            <button v-if="apt.status === 'scheduled'" @click="cancelAppointment(apt.id)"
-              class="text-[10px] font-bold uppercase tracking-widest text-stone-300 hover:text-red-500 transition-colors">
+            <button @click="cancelAppointment(apt.id)"
+              class="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors">
               Cancelar
             </button>
           </div>
         </div>
       </div>
 
-      <div v-else class="py-24 text-center border-2 border-dashed border-stone-100 rounded-xl">
-        <p class="font-serif italic text-stone-400 text-lg">Nenhum agendamento ativo no momento.</p>
-        <button @click="router.push('/appointments/new')" class="mt-4 text-emerald-600 text-xs font-bold uppercase tracking-widest hover:underline">
-          Marcar agora
+      <div v-else class="py-24 text-center border-2 border-dashed border-stone-200 bg-white rounded-sm">
+        <p v-if="activeTab === 'upcoming'" class="font-serif italic text-stone-400 text-lg">Nenhum agendamento futuro no momento.</p>
+        <p v-if="activeTab === 'history'" class="font-serif italic text-stone-400 text-lg">Seu histórico está vazio.</p>
+        <button v-if="activeTab === 'upcoming'" @click="router.push('/appointments/new')" class="mt-4 text-emerald-600 text-[10px] font-black uppercase tracking-widest hover:underline">
+          Marcar um corte agora
         </button>
       </div>
     </main>

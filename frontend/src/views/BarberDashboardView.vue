@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { ref, onMounted, onUnmounted } from 'vue' 
+import { ref, onMounted, onUnmounted, computed } from 'vue' 
 
 interface Appointment {
   id: number;
@@ -27,6 +27,8 @@ const isLoading = ref(false)
 const isBlockModalOpen = ref(false)
 const isSubmittingBlock = ref(false)
 const blockForm = ref({ date: '', start_time: '', end_time: '' })
+
+const activeAgendaTab = ref<'upcoming' | 'history'>('upcoming')
 
 onMounted(() => {
   const token = localStorage.getItem('token')
@@ -58,6 +60,14 @@ const fetchAgenda = async () => {
     console.error('Erro ao buscar agenda', error)
   }
 }
+
+const upcomingAppointments = computed(() => {
+  return appointments.value.filter(apt => apt.status === 'scheduled')
+})
+
+const historyAppointments = computed(() => {
+  return appointments.value.filter(apt => apt.status === 'completed' || apt.status === 'canceled')
+})
 
 const fetchBlocks = async () => {
   try {
@@ -128,7 +138,10 @@ const updateStatus = async (id: number, newStatus: string) => {
       { status: newStatus },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-    fetchAgenda() 
+    
+    const apt = appointments.value.find(a => a.id === id)
+    if (apt) apt.status = newStatus as any
+    
   } catch (error) {
     alert('Erro ao atualizar status.')
   }
@@ -219,7 +232,6 @@ const markAsRead = async (id: string) => {
       </div>
 
       <div class="flex items-center gap-8 relative">
-        
         <div class="relative">
           <button @click="toggleNotifications" class="text-stone-400 hover:text-emerald-600 transition-colors relative pt-1 outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'animate-pulse text-emerald-600': notifications.length > 0}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -231,7 +243,6 @@ const markAsRead = async (id: string) => {
           </button>
 
           <div v-if="showNotifications" class="absolute right-0 mt-4 w-80 bg-white border border-stone-200 shadow-2xl rounded-sm overflow-hidden z-50 transition-all">
-            
             <div class="bg-stone-50 border-b border-stone-100 flex">
               <button @click="activeTab = 'unread'" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors" :class="activeTab === 'unread' ? 'text-emerald-700 border-b-2 border-emerald-600' : 'text-stone-400 hover:bg-stone-100'">
                 Novas <span v-if="notifications.length > 0">({{ notifications.length }})</span>
@@ -242,57 +253,42 @@ const markAsRead = async (id: string) => {
             </div>
             
             <div class="max-h-80 overflow-y-auto">
-              
               <div v-for="notif in (activeTab === 'unread' ? notifications : history)" :key="notif.id">
-                
-                <button 
-                  @click="activeTab === 'unread' ? markAsRead(notif.id) : null"
+                <button @click="activeTab === 'unread' ? markAsRead(notif.id) : null"
                   class="w-full text-left px-4 py-4 border-b border-stone-50 transition-colors flex gap-3 items-start group"
-                  :class="[activeTab === 'unread' ? 'hover:bg-stone-50 cursor-pointer' : 'cursor-default', notif.read_at && activeTab === 'history' ? 'opacity-60 bg-stone-50/50' : '']"
-                >
+                  :class="[activeTab === 'unread' ? 'hover:bg-stone-50 cursor-pointer' : 'cursor-default', notif.read_at && activeTab === 'history' ? 'opacity-60 bg-stone-50/50' : '']">
                   <div class="mt-0.5 p-1.5 rounded-full transition-all" :class="notif.type === 'canceled_appointment' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'">
-                    <svg v-if="notif.type === 'canceled_appointment'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                    </svg>
+                    <svg v-if="notif.type === 'canceled_appointment'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
                   </div>
-                  
                   <div>
                     <p class="text-sm font-bold text-stone-800 leading-tight mb-1">{{ notif.data.message }}</p>
                     <p class="text-[10px] font-medium uppercase tracking-wider" :class="notif.type === 'canceled_appointment' ? 'text-red-600' : 'text-emerald-600'">
                       Horário: {{ new Date(notif.data.start_time).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) }}
                     </p>
-                    <p v-if="activeTab === 'unread'" class="text-[9px] font-bold text-stone-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
-                      Clique para marcar como lida
-                    </p>
                   </div>
                 </button>
               </div>
-
               <div v-if="(activeTab === 'unread' && notifications.length === 0)" class="px-4 py-8 text-center">
-                <p class="text-xs text-stone-400 font-medium">Você está em dia! Nenhuma novidade.</p>
+                <p class="text-xs text-stone-400 font-medium">Você está em dia!</p>
               </div>
               <div v-if="(activeTab === 'history' && history.length === 0)" class="px-4 py-8 text-center">
-                <p class="text-xs text-stone-400 font-medium">Seu histórico está vazio.</p>
+                <p class="text-xs text-stone-400 font-medium">Histórico vazio.</p>
               </div>
-
             </div>
-          </div>
-        </div>
-
+          </div> 
+        </div> 
         <button @click="handleLogout" class="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400 hover:text-red-600 transition-colors">
           Sair
         </button>
-      </div>
+      </div> 
     </nav>
 
     <main class="max-w-5xl mx-auto py-12 px-6">
-      <header class="mb-10 border-b border-stone-200 pb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+      <header class="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-stone-200 pb-6">
         <div>
           <h2 class="text-4xl font-serif text-stone-900 mb-2">Sua Agenda</h2>
-          <p class="text-stone-500 italic">Acompanhe seus clientes e gerencie os horários de hoje.</p>
+          <p class="text-stone-500 italic">Acompanhe seus clientes e gerencie os horários.</p>
         </div>
         
         <button @click="isBlockModalOpen = true" class="bg-stone-100 hover:bg-stone-200 text-emerald-950 border border-stone-300 text-[10px] font-black uppercase tracking-widest px-8 py-3 transition-colors flex items-center gap-2 shadow-sm">
@@ -303,13 +299,26 @@ const markAsRead = async (id: string) => {
         </button>
       </header>
 
-      <div v-if="appointments.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="apt in appointments" :key="apt.id" 
+      <div class="flex gap-4 border-b border-stone-200 mb-8">
+        <button @click="activeAgendaTab = 'upcoming'"
+          class="pb-3 text-[10px] font-black uppercase tracking-widest transition-colors"
+          :class="activeAgendaTab === 'upcoming' ? 'text-emerald-700 border-b-2 border-emerald-600' : 'text-stone-400 hover:text-stone-600'">
+          Próximos Clientes <span v-if="upcomingAppointments.length" class="ml-1 bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-sm">{{ upcomingAppointments.length }}</span>
+        </button>
+        <button @click="activeAgendaTab = 'history'"
+          class="pb-3 text-[10px] font-black uppercase tracking-widest transition-colors"
+          :class="activeAgendaTab === 'history' ? 'text-stone-800 border-b-2 border-stone-800' : 'text-stone-400 hover:text-stone-600'">
+          Histórico de Atendimentos <span v-if="historyAppointments.length" class="ml-1 bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-sm">{{ historyAppointments.length }}</span>
+        </button>
+      </div>
+
+      <div v-if="(activeAgendaTab === 'upcoming' ? upcomingAppointments : historyAppointments).length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="apt in (activeAgendaTab === 'upcoming' ? upcomingAppointments : historyAppointments)" :key="apt.id" 
           class="bg-white border-l-4 p-6 shadow-sm flex flex-col justify-between transition-all"
           :class="{
-            'border-emerald-600': apt.status === 'scheduled',
-            'border-stone-300 opacity-60': apt.status === 'completed',
-            'border-red-400 opacity-60': apt.status === 'canceled'
+            'border-emerald-600 hover:border-emerald-500': apt.status === 'scheduled',
+            'border-stone-300 opacity-60 bg-stone-50': apt.status === 'completed',
+            'border-red-400 opacity-60 bg-red-50/30': apt.status === 'canceled'
           }">
           
           <div class="flex justify-between items-start mb-6">
@@ -324,15 +333,17 @@ const markAsRead = async (id: string) => {
             <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-sm"
               :class="{
                 'bg-emerald-50 text-emerald-700': apt.status === 'scheduled',
-                'bg-stone-100 text-stone-500': apt.status === 'completed',
-                'bg-red-50 text-red-700': apt.status === 'canceled'
+                'bg-stone-200 text-stone-600': apt.status === 'completed',
+                'bg-red-100 text-red-700': apt.status === 'canceled'
               }">
               {{ apt.status === 'scheduled' ? 'Agendado' : (apt.status === 'completed' ? 'Concluído' : 'Cancelado') }}
             </span>
           </div>
 
           <div class="mb-6">
-            <h4 class="text-lg font-bold text-stone-800 uppercase tracking-tight">{{ apt.user?.name || 'Cliente Oculto' }}</h4>
+            <h4 class="text-lg font-bold text-stone-800 uppercase tracking-tight" :class="{'line-through text-stone-400': apt.status === 'canceled'}">
+              {{ apt.user?.name || 'Cliente Oculto' }}
+            </h4>
             <p class="text-sm text-stone-500 flex items-center gap-2 mt-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               {{ apt.service?.name || 'Serviço Padrão' }}
@@ -352,7 +363,8 @@ const markAsRead = async (id: string) => {
       </div>
 
       <div v-else class="py-24 text-center border-2 border-dashed border-stone-200 rounded-xl bg-white">
-        <p class="font-serif italic text-stone-400 text-lg">Sua agenda está livre no momento.</p>
+        <p v-if="activeAgendaTab === 'upcoming'" class="font-serif italic text-stone-400 text-lg">Sua agenda está livre no momento.</p>
+        <p v-if="activeAgendaTab === 'history'" class="font-serif italic text-stone-400 text-lg">Nenhum histórico de atendimento.</p>
       </div>
     </main>
 
