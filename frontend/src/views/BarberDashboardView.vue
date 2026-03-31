@@ -231,10 +231,13 @@ const markAsRead = async (id: string) => {
         </span>
       </div>
 
-      <div class="flex items-center gap-8 relative">
+      <div class="flex items-center gap-8 relative">        
+        <RouterLink to="/profile" class="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors">
+          Meu Perfil
+        </RouterLink>
         <div class="relative">
           <button @click="toggleNotifications" class="text-stone-400 hover:text-emerald-600 transition-colors relative pt-1 outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'animate-pulse text-emerald-600': notifications.length > 0}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'animate-pulse text-emerald-600': notifications.length > 0}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             <span v-if="notifications.length > 0" class="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white shadow-sm">

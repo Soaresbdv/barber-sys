@@ -8,6 +8,7 @@ import { VueCropper } from 'vue-cropper'
 const router = useRouter()
 const isLoading = ref(true)
 const isSaving = ref(false)
+const userRole = ref(localStorage.getItem('user_role') || 'client')
 
 const form = ref({ name: '', email: '', password: '', password_confirmation: '' })
 const avatarUrl = ref<string | null>(null)
@@ -160,11 +161,16 @@ const handleLogout = () => { localStorage.clear(); router.push('/') }
     <main class="max-w-3xl mx-auto py-12 px-6">
       <header class="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-stone-200 pb-6">
         <div>
-          <button @click="router.push('/')" class="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors mb-4 flex items-center gap-2">&larr; Voltar para a Home</button>
+          <button @click="userRole === 'barber' ? router.push('/barber/dashboard') : router.push('/')" class="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-emerald-700 transition-colors mb-4 flex items-center gap-2">
+            &larr; Voltar para o Painel
+          </button>
           <h2 class="text-4xl font-serif text-stone-900 mb-2">Meu Perfil</h2>
           <p class="text-stone-500 italic">Central de controle da sua conta.</p>
         </div>
-        <button @click="router.push('/dashboard')" class="bg-stone-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest px-8 py-4 transition-transform active:scale-95 shadow-md">Ver Meus Agendamentos &rarr;</button>
+        
+        <button @click="userRole === 'barber' ? router.push('/barber/dashboard') : router.push('/dashboard')" class="bg-stone-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest px-8 py-4 transition-transform active:scale-95 shadow-md">
+          {{ userRole === 'barber' ? 'Ver Minha Agenda' : 'Ver Meus Agendamentos' }} &rarr;
+        </button>
       </header>
 
       <div v-if="isLoading" class="text-center py-12 animate-pulse text-stone-400 font-serif italic">Carregando informações...</div>
@@ -185,7 +191,12 @@ const handleLogout = () => { localStorage.clear(); router.push('/') }
           </div>
           <div class="text-center sm:text-left">
             <h3 class="font-bold text-stone-800 text-lg mb-1 capitalize">{{ form.name.split(' ')[0] }}</h3>
-            <p class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm inline-block font-bold mb-4">Cliente Fidelidade</p>
+            <p v-if="userRole === 'barber'" class="text-[10px] font-black uppercase tracking-widest text-white bg-emerald-900 px-3 py-1 rounded-sm inline-block mb-4 shadow-sm">
+              Mestre Barbeiro
+            </p>
+            <p v-else class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm inline-block font-bold mb-4">
+              Cliente Fidelidade
+            </p>
             <div class="flex gap-2 justify-center sm:justify-start">
               <button @click="triggerFileInput" class="text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900 border border-emerald-200 bg-emerald-50 px-4 py-2 hover:bg-emerald-100 transition-colors rounded-sm">
                 Alterar Foto
