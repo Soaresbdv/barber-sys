@@ -86,16 +86,14 @@ const saveCroppedImage = () => {
       return alert('A imagem recortada ficou muito pesada (mais de 5MB). Tente diminuir o zoom ou escolher outra imagem.')
     }
 
+    const fileToUpload = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
     const formData = new FormData()
-    formData.append('avatar', blob, 'avatar.jpg') 
+    formData.append('avatar', fileToUpload) 
 
     try {
       const token = localStorage.getItem('token')
       const response = await axios.post('http://localhost:8000/api/profile/avatar', formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
-        }
+        headers: { Authorization: `Bearer ${token}` } 
       })
       
       avatarUrl.value = response.data.avatar_url 
@@ -105,8 +103,10 @@ const saveCroppedImage = () => {
       localStorage.setItem('user', JSON.stringify(userData))
 
       isCropModalOpen.value = false 
-    } catch (error) {
-      alert('Erro ao enviar a foto recortada para o servidor.')
+    } catch (error: any) {
+      const msgErro = error.response?.data?.message || error.message || 'Erro desconhecido';
+      alert(`Servidor recusou a foto. Motivo: ${msgErro}`);
+      console.error('Detalhes do Erro:', error.response);
     } finally {
       isUploadingAvatar.value = false
     }
